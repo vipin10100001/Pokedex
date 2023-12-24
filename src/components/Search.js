@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const Search = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [pokemonImageUrl, setPokemonImageUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [nextPage, setNextPage] = useState('');
@@ -13,7 +12,7 @@ const Search = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedPokemon, setSelectedPokemon] = useState(null);
 
-  const fetchData = async (url) => {
+  const fetchData = useCallback(async (url) => {
     setIsLoading(true);
     setError(null);
 
@@ -30,14 +29,14 @@ const Search = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setIsLoading, setError, setSearchResults, setNextPage]);
 
   useEffect(() => {
     fetchData('https://pokeapi.co/api/v2/pokemon?limit=20');
     axios.get('https://pokeapi.co/api/v2/type').then((response) => {
       setTypes(response.data.results.map((type) => type.name));
     });
-  }, []);
+  }, [fetchData]);
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -69,20 +68,20 @@ const Search = () => {
     setSelectedPokemon(null);
   };
 
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     if (window.innerHeight + document.documentElement.scrollTop === document.documentElement.offsetHeight) {
       if (nextPage) {
         fetchData(nextPage);
       }
     }
-  };
+  }, [nextPage, fetchData]);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [nextPage]);
+  }, [handleScroll, nextPage]);
 
   return (
     <div className="flex flex-col items-center py-4 px-6 bg-white rounded-lg shadow-md">
